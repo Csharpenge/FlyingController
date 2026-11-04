@@ -92,6 +92,24 @@ Project Settings → Plugins → Flying Controller（`/Script/FlyingController.F
 
 Project Settings → Plugins → Flying Controller（`/Script/FlyingController.FlyingControllerSettings`）：设备过滤（VID/PID/名称/序号）、四轴 usage 映射、死区/指数/反向、油门是否自回中、调试日志开关。
 
+## 编辑器面板：摇杆状态监控
+
+关卡编辑器工具栏上有一个 **「手柄」** 按钮，点开浮动窗口，实时显示：
+
+- 设备状态（名称 / VID:PID，或「未连接」）
+- 左摇杆圆盘：偏航（左右）+ 油门（上下），带四方向文字标注
+- 右摇杆圆盘：横滚（左右）+ 俯仰（上下）
+- 原始轴读数 `X / Y / Z / Rx / Ry / S0`（按 0~255 归一化）
+- 四通道值 `THR / YAW / PIT / ROL` 与当前按下的按键
+
+![面板截图](../../../docs/images/flyingcontroller_panel.png)
+
+数据来自运行期模块的 `FlyingControllerState::Get()`（每帧由设备写入），面板按帧重绘。
+
+控制台也可打开：`FlyingController.OpenMonitor`。
+
+> 调试用：加 `-FlyingControllerAutoOpenMonitor` 启动参数，编辑器加载约 20 秒后自动打开（开机早期用 `-ExecCmds` 打开会被随后的布局恢复关掉，所以走延迟路径）。
+
 ## 回调事件：设备连接 / 断开
 
 插件在检测到手柄接入或掉线时各广播一个事件，C++ 和蓝图两条路都可用。
@@ -139,8 +157,10 @@ void UMyClass::HandleStickDisconnected(const FLyingControllerDeviceInfo& Info)
 | --- | --- | --- |
 | `OnDeviceConnected` | 事件（BlueprintAssignable） | 检测到连接 |
 | `OnDeviceDisconnected` | 事件（BlueprintAssignable） | 检测到断开 |
-| `IsDeviceConnected` | 纯函数 | 当前是否连接 |
-| `GetConnectedDevice` | 纯函数 | 最近一次的设备信息 |
+| `IsDeviceConnected` | 纯函数 | 当前是否连接（**实时读取运行期状态**，不依赖事件是否收到过） |
+| `GetConnectedDevice` | 纯函数 | 当前（或最近一次）的设备信息 |
+
+`IsDeviceConnected` 直接读 `FlyingControllerState::Get().bConnected`：手柄经常在 GameInstance（子系统）创建之前就连上了，那一次「连接」事件收不到，如果只靠事件缓存结果会永远是 false。子系统初始化时还会按当前状态补广播一次 `OnDeviceConnected`，保证蓝图订阅者拿到正确的初始状态。
 
 子系统会自动订阅/退订底层 C++ 事件，不需要手动清理。
 

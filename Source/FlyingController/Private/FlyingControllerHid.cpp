@@ -408,4 +408,26 @@ FString FFlyingControllerHid::GetRawValuesString() const
 	return Result;
 }
 
+void FFlyingControllerHid::CollectRawValues(TMap<uint16, uint32>& OutValues) const
+{
+	OutValues.Reset();
+	if (!Impl->PreparsedData || Impl->ReportBuffer.Num() == 0)
+	{
+		return;
+	}
+
+	for (const TPair<uint32, TPair<FFlyingControllerAxisRange, USHORT>>& Pair : Impl->AxisCaps)
+	{
+		const uint16 Page = static_cast<uint16>(Pair.Key >> 16);
+		const uint16 Usage = static_cast<uint16>(Pair.Key & 0xFFFF);
+
+		ULONG Value = 0;
+		if (HidP_GetUsageValue(HidP_Input, Page, Pair.Value.Value, Usage, &Value, Impl->PreparsedData,
+			reinterpret_cast<PCHAR>(Impl->ReportBuffer.GetData()), Impl->ReportBuffer.Num()) == HIDP_STATUS_SUCCESS)
+		{
+			OutValues.Add(Usage, static_cast<uint32>(Value));
+		}
+	}
+}
+
 #endif // PLATFORM_WINDOWS

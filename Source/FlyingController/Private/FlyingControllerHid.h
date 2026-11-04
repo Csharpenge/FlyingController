@@ -70,6 +70,9 @@ public:
 	/** 把当前报告里所有轴的原始值拼成一行，用于现场判定「哪根杆对应哪个 usage」。 */
 	FString GetRawValuesString() const;
 
+	/** 收集当前报告里所有轴的原始值（usage → 读数），供编辑器面板展示。 */
+	void CollectRawValues(TMap<uint16, uint32>& OutValues) const;
+
 	const FFlyingControllerHidDeviceInfo& GetInfo() const { return DeviceInfo; }
 
 private:

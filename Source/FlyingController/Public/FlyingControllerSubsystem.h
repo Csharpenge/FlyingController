@@ -40,12 +40,18 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "FlyingController")
 	FOnFlyingControllerDeviceDisconnectedBP OnDeviceDisconnected;
 
+	/**
+	 * 手柄当前是否连接。
+	 *
+	 * 读的是运行期实时状态（FlyingControllerState），不是订阅事件时缓存的旧值——
+	 * 因为手柄往往在 GameInstance（本子系统）创建之前就连上了，那一次连接事件收不到。
+	 */
 	UFUNCTION(BlueprintPure, Category = "FlyingController")
-	bool IsDeviceConnected() const { return bConnected; }
+	bool IsDeviceConnected() const;
 
-	/** 最近一次连接（或刚断开）的设备信息。 */
+	/** 当前（或最近一次）设备信息。 */
 	UFUNCTION(BlueprintPure, Category = "FlyingController")
-	FLyingControllerDeviceInfo GetConnectedDevice() const { return ConnectedDevice; }
+	FLyingControllerDeviceInfo GetConnectedDevice() const;
 
 private:
 	void HandleDeviceConnected(const FLyingControllerDeviceInfo& DeviceInfo);
@@ -53,7 +59,4 @@ private:
 
 	FDelegateHandle ConnectedHandle;
 	FDelegateHandle DisconnectedHandle;
-
-	bool bConnected = false;
-	FLyingControllerDeviceInfo ConnectedDevice;
 };

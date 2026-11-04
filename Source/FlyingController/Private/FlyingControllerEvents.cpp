@@ -2,6 +2,8 @@
 
 #include "FlyingControllerEvents.h"
 
+#include "FlyingControllerState.h"
+
 FOnFlyingControllerDeviceConnected& FFlyingControllerEvents::OnDeviceConnected()
 {
 	static FOnFlyingControllerDeviceConnected Delegate;
@@ -12,4 +14,14 @@ FOnFlyingControllerDeviceDisconnected& FFlyingControllerEvents::OnDeviceDisconne
 {
 	static FOnFlyingControllerDeviceDisconnected Delegate;
 	return Delegate;
+}
+
+bool FFlyingControllerEvents::IsConnected()
+{
+	return FlyingControllerState::Get().bConnected;
+}
+
+FLyingControllerDeviceInfo FFlyingControllerEvents::GetDeviceInfo()
+{
+	return FlyingControllerState::Get().Device;
 }

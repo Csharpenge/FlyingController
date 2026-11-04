@@ -22,6 +22,11 @@
 			"Name": "FlyingController",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "FlyingControllerEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	]
 }

@@ -5,6 +5,7 @@
 #include "FlyingControllerEvents.h"
 #include "FlyingControllerKeys.h"
 #include "FlyingControllerSettings.h"
+#include "FlyingControllerState.h"
 #include "GenericPlatform/GenericApplicationMessageHandler.h"
 #include "GenericPlatform/GenericPlatformInputDeviceMapper.h"
 #include "GenericPlatform/InputDeviceRegistry.h"
@@ -140,6 +141,12 @@ bool FFlyingControllerDevice::TryConnect()
 	ConnectedDeviceInfo.DevicePath = Chosen.DevicePath;
 	ConnectedDeviceInfo.bConnected = true;
 
+	// 同步给编辑器面板读取的状态快照。
+	FLyingControllerInputState& State = FlyingControllerState::GetMutable();
+	State.bConnected = true;
+	State.Device = ConnectedDeviceInfo;
+	State.LastUpdateTime = FPlatformTime::Seconds();
+
 	UE_LOG(LogFlyingController, Log, TEXT("飞行手柄已接入：%s%s"), *Chosen.ToString(), *Hid.DescribeCaps());
 	UE_LOG(LogFlyingController, Log, TEXT("轴映射：Roll=%04X Pitch=%04X Throttle=%04X Yaw=%04X（Usage Page %04X）"),
 		Settings->RollUsage, Settings->PitchUsage, Settings->ThrottleUsage, Settings->YawUsage, Settings->AxisUsagePage);
@@ -187,6 +194,13 @@ void FFlyingControllerDevice::Disconnect()
 	Hid.Close();
 	bConnected = false;
 	AxisCalibrations.Reset();
+
+	FLyingControllerInputState& State = FlyingControllerState::GetMutable();
+	State.bConnected = false;
+	State.Device = ConnectedDeviceInfo;
+	State.PressedButtons.Reset();
+	State.RawAxes.Reset();
+	State.LastUpdateTime = FPlatformTime::Seconds();
 }
 
 bool FFlyingControllerDevice::ReadAxis(int32 Usage, uint32& OutValue, FFlyingControllerAxisRange& OutRange) const
@@ -386,6 +400,14 @@ void FFlyingControllerDevice::UpdateChannels()
 	ChannelPitch = ShapeAxis(ChannelPitch);
 	ChannelYaw = ShapeAxis(ChannelYaw);
 
+	// 同步通道值给编辑器面板。
+	FLyingControllerInputState& State = FlyingControllerState::GetMutable();
+	State.Throttle = ChannelThrottle;
+	State.Yaw = ChannelYaw;
+	State.Pitch = ChannelPitch;
+	State.Roll = ChannelRoll;
+	State.LastUpdateTime = FPlatformTime::Seconds();
+
 	const bool bWantChannelLog = Settings->bLogChannelValues || bConsoleDebug;
 	const bool bWantRawLog = Settings->bLogRawValues || bRawDump;
 
@@ -488,6 +510,12 @@ void FFlyingControllerDevice::SendControllerEvents()
 
 	Hid.ReadPressedButtons(PressedButtons);
 	EmitInput();
+
+	// 原始轴与按键同步给编辑器面板。
+	FLyingControllerInputState& State = FlyingControllerState::GetMutable();
+	Hid.CollectRawValues(State.RawAxes);
+	State.PressedButtons = PressedButtons;
+	State.LastUpdateTime = FPlatformTime::Seconds();
 }
 
 bool FFlyingControllerDevice::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
