@@ -1,0 +1,27 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "Flying Controller",
+	"Description": "飞行手柄 / 遥控器适配插件。为输电线路无人机巡检虚拟仿真提供双摇杆飞行输入的设备层适配。",
+	"Category": "Input",
+	"CreatedBy": "",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"PlatformAllowList": [
+		"Windows"
+	],
+	"Modules": [
+		{
+			"Name": "FlyingController",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
